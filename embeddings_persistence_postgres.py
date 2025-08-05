@@ -48,9 +48,7 @@ class EmbeddingsPersistencePostgres:
                             or not isinstance(e["embedding"], list)
                             or len(e["embedding"]) != 1536
                         ):
-                            logger.warning(
-                                f"Skipping invalid embedding"
-                            )
+                            logger.warning(f"Skipping invalid embedding")
                             continue
                         values.append((file_name, e["chunk"], e["embedding"]))
                     if values:
@@ -67,7 +65,9 @@ class EmbeddingsPersistencePostgres:
         try:
             with psycopg.connect(self.dsn) as conn:
                 with conn.cursor() as cur:
-                    logger.debug(f"Loading embeddings from PostgreSQL with file_name: {file_name}")
+                    logger.debug(
+                        f"Loading embeddings from PostgreSQL with file_name: {file_name}"
+                    )
                     cur.execute(
                         "SELECT chunk, embedding FROM log_chunks WHERE file_name = %s",
                         (file_name,),
@@ -80,7 +80,9 @@ class EmbeddingsPersistencePostgres:
                             logger.warning(f"Embedding contains non-numeric data: {e}")
                             continue
                         if len(emb) != 1536:
-                            logger.warning(f"Skipping embedding with incorrect shape. {len(emb)}")
+                            logger.warning(
+                                f"Skipping embedding with incorrect shape. {len(emb)}"
+                            )
                             continue
                         chunks.append(
                             {

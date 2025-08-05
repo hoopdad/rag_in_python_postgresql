@@ -83,7 +83,9 @@ class AzureOpenAIEmbedding:
             for chunk in chunks:
                 emb = self._get_embedding(chunk)
                 results.append({"chunk": chunk, "embedding": emb.tolist()})
-            self.chunk_saver.save_embeddings(embeddings=results, file_name=log_path)  # Save new embeddings
+            self.chunk_saver.save_embeddings(
+                embeddings=results, file_name=log_path
+            )  # Save new embeddings
             # self.save_embeddings(results, out_path)
         except Exception as e:
             logger.exception(f"Error embedding chunks: {e}")
@@ -156,7 +158,9 @@ def query_logs(question: str, log_file: str) -> str:
     # if not os.path.exists(CHUNK_OUTPUT_FILE) or os.path.getsize(CHUNK_OUTPUT_FILE) < 1:
     embedding_client.chunk_embed_and_save(log_file)  # Run once to create embeddings
 
-    context = embedding_client.get_top_chunks_for_question(question=question, log_file_name=log_file)
+    context = embedding_client.get_top_chunks_for_question(
+        question=question, log_file_name=log_file
+    )
 
     response: workflow_completion_status = (
         workflow_completion_client.DetermineWorkflowCompletionStatus(
