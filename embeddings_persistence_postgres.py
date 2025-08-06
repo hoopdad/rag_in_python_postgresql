@@ -86,7 +86,7 @@ class EmbeddingsPersistencePostgres:
                             continue
                         chunks.append(
                             {
-                                "chunk": row[0],
+                                "chunk": str(row[0]),
                                 "embedding": list(
                                     emb
                                 ),  # Convert to list for JSON compatibility

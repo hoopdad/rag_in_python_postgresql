@@ -100,7 +100,7 @@ class BamlSyncClient:
     
     def DetermineWorkflowCompletionStatus(
         self,
-        context: str,question: str,
+        input: types.WorkflowAnalysisDetails,
         baml_options: BamlCallOptions = {},
     ) -> types.WorkflowCompletionStatus:
       options: BamlCallOptions = {**self.__baml_options, **(baml_options or {})}
@@ -116,7 +116,7 @@ class BamlSyncClient:
       raw = self.__runtime.call_function_sync(
         "DetermineWorkflowCompletionStatus",
         {
-          "context": context,"question": question,
+          "input": input,
         },
         self.__ctx_manager.get(),
         tb,
@@ -140,7 +140,7 @@ class BamlStreamClient:
     
     def DetermineWorkflowCompletionStatus(
         self,
-        context: str,question: str,
+        input: types.WorkflowAnalysisDetails,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[partial_types.WorkflowCompletionStatus, types.WorkflowCompletionStatus]:
       options: BamlCallOptions = {**self.__baml_options, **(baml_options or {})}
@@ -156,8 +156,7 @@ class BamlStreamClient:
       raw = self.__runtime.stream_function_sync(
         "DetermineWorkflowCompletionStatus",
         {
-          "context": context,
-          "question": question,
+          "input": input,
         },
         None,
         self.__ctx_manager.get(),

@@ -4,7 +4,10 @@ import logging
 import numpy as np
 from openai import AzureOpenAI
 from baml_client.sync_client import b as workflow_completion_client
-from baml_client.types import WorkflowCompletionStatus as workflow_completion_status
+from baml_client.types import (
+    WorkflowCompletionStatus as workflow_completion_status,
+    WorkflowAnalysisDetails,
+)
 from embeddings_persistence_postgres import EmbeddingsPersistencePostgres
 
 logger = logging.getLogger(__name__)
@@ -48,29 +51,23 @@ class AzureOpenAIEmbedding:
         )
         self.embedding_client = self._get_embeddings_client()
 
-    def get_top_chunks_for_question(self, log_file_name: str, question: str) -> str:
+    def get_top_chunks_for_question(self, log_file_name: str, question: str) -> list:
         context = ""
         try:
             chunks = self.chunk_saver.load_embeddings(log_file_name)
             logger.debug(f"Loaded {len(chunks)} chunks")
-            for c in chunks:
-                logger.debug(
-                    f"Chunk: {c['chunk'][:50]}... Embedding: {c['embedding'][:10]}..."
-                )
             q_embedding = self._get_embedding(question)
             scored = [
                 (c["chunk"], self._cosine_similarity(q_embedding, c["embedding"]))
                 for c in chunks
             ]
             top_chunks = sorted(scored, key=lambda x: x[1], reverse=True)[: self.top_k]
-            for chunk, score in top_chunks:
-                logger.debug(f"Chunk: {chunk[:50]}... Score: {score:.4f}")
 
-            context = "\n\n---\n\n".join(chunk for chunk, _ in top_chunks)
+            # context = "\n\n---\n\n".join(chunk for chunk, _ in top_chunks)
         except Exception as e:
             logger.exception(f"Error getting context for chunks: {e}")
             raise e
-        return context
+        return top_chunks
 
     def chunk_embed_and_save(self, log_path: str):
         logger.debug(f"Embedding and saving chunks from {log_path}")
@@ -161,10 +158,18 @@ def query_logs(question: str, log_file: str) -> str:
     context = embedding_client.get_top_chunks_for_question(
         question=question, log_file_name=log_file
     )
+    chunks = []
+    for chunk, score in context:
+        logger.debug(f"Chunk: {chunk[:50]}... Score: {score:.4f}")
+        chunks.append(str(chunk))
 
+    prompt_input: WorkflowAnalysisDetails = WorkflowAnalysisDetails(
+        logs = chunks,
+        question = question
+    )
     response: workflow_completion_status = (
         workflow_completion_client.DetermineWorkflowCompletionStatus(
-            context=context, question=question
+            input=prompt_input
         )
     )
     logger.debug(f"Response from workflow completion client: {response}")

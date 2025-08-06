@@ -40,6 +40,10 @@ def all_succeeded(checks: Dict[CheckName, Check]) -> bool:
 
 
 
+class WorkflowAnalysisDetails(BaseModel):
+    logs: List[str]
+    question: str
+
 class WorkflowCompletionStatus(BaseModel):
     result: str
     reason: str

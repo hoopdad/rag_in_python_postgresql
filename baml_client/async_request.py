@@ -39,7 +39,7 @@ class AsyncHttpRequest:
     
     async def DetermineWorkflowCompletionStatus(
         self,
-        context: str,question: str,
+        input: types.WorkflowAnalysisDetails,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.HTTPRequest:
       __tb__ = baml_options.get("tb", None)
@@ -52,8 +52,7 @@ class AsyncHttpRequest:
       return await self.__runtime.build_request(
         "DetermineWorkflowCompletionStatus",
         {
-          "context": context,
-          "question": question,
+          "input": input,
         },
         self.__ctx_manager.get(),
         tb,
@@ -74,7 +73,7 @@ class AsyncHttpStreamRequest:
     
     async def DetermineWorkflowCompletionStatus(
         self,
-        context: str,question: str,
+        input: types.WorkflowAnalysisDetails,
         baml_options: BamlCallOptions = {},
     ) -> baml_py.HTTPRequest:
       __tb__ = baml_options.get("tb", None)
@@ -87,8 +86,7 @@ class AsyncHttpStreamRequest:
       return await self.__runtime.build_request(
         "DetermineWorkflowCompletionStatus",
         {
-          "context": context,
-          "question": question,
+          "input": input,
         },
         self.__ctx_manager.get(),
         tb,

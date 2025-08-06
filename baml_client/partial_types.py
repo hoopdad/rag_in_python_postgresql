@@ -35,6 +35,10 @@ class StreamState(BaseModel, Generic[T]):
     state: Literal["Pending", "Incomplete", "Complete"]
 
 
+class WorkflowAnalysisDetails(BaseModel):
+    logs: List[str]
+    question: Optional[str] = None
+
 class WorkflowCompletionStatus(BaseModel):
     result: Optional[str] = None
     reason: Optional[str] = None

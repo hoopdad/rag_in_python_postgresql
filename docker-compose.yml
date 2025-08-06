@@ -3,7 +3,6 @@ version: '3.8'
 services:
   postgres:
     image: ankane/pgvector
-    container_name: pgvector-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
