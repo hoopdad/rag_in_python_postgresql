@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # CONFIG for Embeddings
 EMBEDDING_API_VERSION = "2024-12-01-preview"
 EMBED_MODEL = "text-embedding-3-small"
-CHUNK_SIZE = 1000
+CHUNK_SIZE = 1500
 TOP_K = 5
 CHUNK_OUTPUT_FILE = "log_chunks2.json"
 
@@ -114,15 +114,29 @@ class AzureOpenAIEmbedding:
 
     def _chunk_text(self, text: str) -> list[str]:
         lines = text.splitlines()
-        chunks, current = [], ""
-        for line in lines:
-            if len(current) + len(line) + 1 <= self.chunk_size:
-                current += line + "\n"
-            else:
-                chunks.append(current.strip())
-                current = line + "\n"
-        if current:
-            chunks.append(current.strip())
+        chunks = []
+
+        max_chars = self.chunk_size  # e.g., 1500
+        min_lines = 5  # Avoid chunks with too little context
+        overlap = 3  # Number of lines to overlap
+
+        i = 0
+        while i < len(lines):
+            current_chunk = []
+            total_len = 0
+            j = i
+
+            while j < len(lines) and total_len + len(lines[j]) + 1 <= max_chars:
+                current_chunk.append(lines[j])
+                total_len += len(lines[j]) + 1
+                j += 1
+
+            if len(current_chunk) >= min_lines:
+                chunks.append("\n".join(current_chunk).strip())
+
+            # Slide the window forward with overlap
+            i = j - overlap if j - overlap > i else j
+
         return chunks
 
 
