@@ -22,6 +22,9 @@ function DetermineWorkflowCompletionStatus(input: WorkflowAnalysisDetails) -> Wo
   prompt #"
         You are a helpful DevOps engineer with expertise in Terraform, AWS and GitHub Actions. 
         Use the following log context to answer the question.
+        Question:
+        {{input.question}}
+
         Context:
 
         {% for logChunk in input.logs %}
@@ -31,10 +34,6 @@ function DetermineWorkflowCompletionStatus(input: WorkflowAnalysisDetails) -> Wo
         ----
         {% endfor %}
     
-          Question:
-        {{input.question}}
-        Give a one word error or warning reason that best summarizes. Respond only in JSON format
-
     {{ ctx.output_format }}
   "#
 }

@@ -10,6 +10,7 @@ class EmbeddingsPersistencePostgres:
     def __init__(self, dsn: str):
         self.dsn = dsn
         self._ensure_table()
+        print(f"__name__: {__name__}")
 
     def _ensure_table(self):
         try:
@@ -21,7 +22,6 @@ class EmbeddingsPersistencePostgres:
                     # Ensure log_chunks table exists
                     cur.execute(
                         """
-                        DROP TABLE IF EXISTS log_chunks;
                         CREATE TABLE IF NOT EXISTS log_chunks (
                             id SERIAL PRIMARY KEY,
                             file_name TEXT NOT NULL,
@@ -94,5 +94,55 @@ class EmbeddingsPersistencePostgres:
                         )
         except Exception as e:
             logger.exception(f"Error loading embeddings from PostgreSQL: {e}", e)
+            raise
+        return chunks
+    
+    def embeddings_exist(self, file_name: str) -> bool:
+        exists:bool = False
+        try:
+            with psycopg.connect(self.dsn) as conn:
+                with conn.cursor() as cur:
+                    logger.debug(
+                        f"Checking for embeddings from PostgreSQL with file_name: {file_name}"
+                    )
+                    cur.execute(
+                        "SELECT count(*) FROM log_chunks WHERE file_name = %s",
+                        (file_name,),
+                    )
+                    for row in cur.fetchall():
+                        cnt = row[0]
+                        logger.debug(f"Found {cnt} embeddings for file_name: {file_name}")
+                        exists = cnt > 0
+                        break
+        except Exception as e:
+            logger.exception(f"Error loading embeddings from PostgreSQL: {e}", e)
+            raise
+        return exists
+    
+    def cosine_similarity(self, file_name:str, question_vector:list[float]) -> list:
+        chunks = []
+        try:
+            with psycopg.connect(self.dsn) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT chunk, embedding <#> %s::vector AS distance
+                        FROM log_chunks
+                        WHERE file_name = %s
+                        ORDER BY distance ASC
+                        LIMIT 5
+                        """,
+                        (question_vector,file_name,),  # passed as a vector parameter
+                    )
+
+                    for row in cur.fetchall():
+                        logger.debug(f"Distance: {row[1]:.4f}, Chunk: {row[0][:80]}")
+                        chunks.append({ 
+                            "chunk": str(row[0]),
+                            "score": float(row[1])
+                        }
+                        )
+        except Exception as e:
+            logger.exception(f"Error cosine_similarity from PostgreSQL: {e}", e)
             raise
         return chunks
