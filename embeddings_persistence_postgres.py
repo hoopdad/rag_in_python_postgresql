@@ -96,9 +96,9 @@ class EmbeddingsPersistencePostgres:
             logger.exception(f"Error loading embeddings from PostgreSQL: {e}", e)
             raise
         return chunks
-    
+
     def embeddings_exist(self, file_name: str) -> bool:
-        exists:bool = False
+        exists: bool = False
         try:
             with psycopg.connect(self.dsn) as conn:
                 with conn.cursor() as cur:
@@ -111,15 +111,17 @@ class EmbeddingsPersistencePostgres:
                     )
                     for row in cur.fetchall():
                         cnt = row[0]
-                        logger.debug(f"Found {cnt} embeddings for file_name: {file_name}")
+                        logger.debug(
+                            f"Found {cnt} embeddings for file_name: {file_name}"
+                        )
                         exists = cnt > 0
                         break
         except Exception as e:
             logger.exception(f"Error loading embeddings from PostgreSQL: {e}", e)
             raise
         return exists
-    
-    def cosine_similarity(self, file_name:str, question_vector:list[float]) -> list:
+
+    def cosine_similarity(self, file_name: str, question_vector: list[float]) -> list:
         chunks = []
         try:
             with psycopg.connect(self.dsn) as conn:
@@ -132,16 +134,15 @@ class EmbeddingsPersistencePostgres:
                         ORDER BY distance ASC
                         LIMIT 5
                         """,
-                        (question_vector,file_name,),  # passed as a vector parameter
+                        (
+                            question_vector,
+                            file_name,
+                        ),  # passed as a vector parameter
                     )
 
                     for row in cur.fetchall():
                         logger.debug(f"Distance: {row[1]:.4f}, Chunk: {row[0][:80]}")
-                        chunks.append({ 
-                            "chunk": str(row[0]),
-                            "score": float(row[1])
-                        }
-                        )
+                        chunks.append({"chunk": str(row[0]), "score": float(row[1])})
         except Exception as e:
             logger.exception(f"Error cosine_similarity from PostgreSQL: {e}", e)
             raise

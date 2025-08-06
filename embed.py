@@ -164,13 +164,10 @@ def query_logs(question: str, log_file: str) -> str:
         chunks.append(str(chunk))
 
     prompt_input: WorkflowAnalysisDetails = WorkflowAnalysisDetails(
-        logs = chunks,
-        question = question
+        logs=chunks, question=question
     )
     response: workflow_completion_status = (
-        workflow_completion_client.DetermineWorkflowCompletionStatus(
-            input=prompt_input
-        )
+        workflow_completion_client.DetermineWorkflowCompletionStatus(input=prompt_input)
     )
     logger.debug(f"Response from workflow completion client: {response}")
 

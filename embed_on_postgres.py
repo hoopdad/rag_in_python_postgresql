@@ -52,12 +52,14 @@ class AzureOpenAIEmbedding:
         try:
             q_embedding = self._get_embedding(question)
             q_embedding = q_embedding.tolist()  # Convert to list for JSON compatibility
-            top_chunks = self.chunk_saver.cosine_similarity(file_name=log_file_name, question_vector=q_embedding)
+            top_chunks = self.chunk_saver.cosine_similarity(
+                file_name=log_file_name, question_vector=q_embedding
+            )
         except Exception as e:
             logger.exception(f"Error getting context for chunks: {e}")
             raise e
         return top_chunks
-    
+
     def embeddings_exist(self, file_name: str) -> bool:
         try:
             exists = self.chunk_saver.embeddings_exist(file_name=file_name)
@@ -71,16 +73,12 @@ class AzureOpenAIEmbedding:
         try:
             with open(log_path, "r") as f:
                 text = f.read()
-            # chunks = self.chunk_saver.load_embeddings() # self._chunk_text(text)
             chunks = self._chunk_text(text)
             results = []
             for chunk in chunks:
                 emb = self._get_embedding(chunk)
                 results.append({"chunk": chunk, "embedding": emb.tolist()})
-            self.chunk_saver.save_embeddings(
-                embeddings=results, file_name=log_path
-            )  # Save new embeddings
-            # self.save_embeddings(results, out_path)
+            self.chunk_saver.save_embeddings(embeddings=results, file_name=log_path)
         except Exception as e:
             logger.exception(f"Error embedding chunks: {e}")
             return 0
@@ -127,6 +125,7 @@ class AzureOpenAIEmbedding:
             chunks.append(current.strip())
         return chunks
 
+
 def query_logs(question: str, log_file: str) -> str:
 
     embedding_client = AzureOpenAIEmbedding(
@@ -139,13 +138,13 @@ def query_logs(question: str, log_file: str) -> str:
         chunk_top_k=TOP_K,
     )
 
-    # if not os.path.exists(CHUNK_OUTPUT_FILE) or os.path.getsize(CHUNK_OUTPUT_FILE) < 1:
-    
-    if (not embedding_client.embeddings_exist(file_name=log_file)):
+    if not embedding_client.embeddings_exist(file_name=log_file):
         logger.debug(f"Embeddings do not exist for {log_file}. Creating embeddings.")
         embedding_client.chunk_embed_and_save(log_file)  # Run once to create embeddings
     else:
-        logger.debug(f"Embeddings already exist for {log_file}. Skipping embedding creation.")
+        logger.debug(
+            f"Embeddings already exist for {log_file}. Skipping embedding creation."
+        )
 
     context = embedding_client.get_top_chunks_for_question(
         question=question, log_file_name=log_file
@@ -153,16 +152,13 @@ def query_logs(question: str, log_file: str) -> str:
     chunks = []
     for chnk in context:
         logger.debug(f"Chunk: {chnk['chunk'][:50]}... Score: {chnk['score']:.4f}")
-        chunks.append(str(chnk['chunk']))
+        chunks.append(str(chnk["chunk"]))
 
     prompt_input: WorkflowAnalysisDetails = WorkflowAnalysisDetails(
-        logs = chunks,
-        question = question
+        logs=chunks, question=question
     )
     response: workflow_completion_status = (
-        workflow_completion_client.DetermineWorkflowCompletionStatus(
-            input=prompt_input
-        )
+        workflow_completion_client.DetermineWorkflowCompletionStatus(input=prompt_input)
     )
     logger.debug(f"Response from workflow completion client: {response}")
 
@@ -180,19 +176,14 @@ if __name__ == "__main__":
         level=logging.DEBUG,  # or INFO if you want less verbosity
         format="%(asctime)s %(levelname)s [%(name)s]: %(message)s",
     )
-    logging.getLogger("embeddings_persistence_postgres").setLevel(
-        logging.DEBUG
-    )
+    logging.getLogger("embeddings_persistence_postgres").setLevel(logging.DEBUG)
 
     dotenv.load_dotenv()
     logger.debug(f"AZURE_EMBEDDING_ENDPOINT: {os.getenv('AZURE_EMBEDDING_ENDPOINT')}")
     logger.debug(f"PROMPT_ENDPOINT: {os.getenv('PROMPT_ENDPOINT')}")
 
-    # question = """
-    #     Given all the warning and error conditions reported in this log, did this log succeed or fail? 
-    # """
     question = """
-    How is eks handled in this workflow?
+        Given all the warning and error conditions reported in this log, did this log succeed or fail? 
     """
     log_file = os.getenv("LOG_FILE")
 
