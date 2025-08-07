@@ -1,3 +1,4 @@
 openai
 dotenv
-"psycopg[binary]"
+psycopg[binary]
+baml-py==0.86
